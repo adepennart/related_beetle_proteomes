@@ -37,7 +37,6 @@ import argparse
 
 
 from multiprocessing import Pool
-from PIL import Image
 from tqdm import tqdm
 import gzip
 import shutil
@@ -45,10 +44,11 @@ import pathlib
 
 logging.basicConfig(level=logging.INFO)
 
+#function for unzipping and relabelling fasta headers
 def rename_file(file_paths):
-    fasta = file_paths[0].split('/')[-1]
-    if re.search(".gz$",fasta): 
-        with gzip.open(file_paths[0], 'rb') as f_in:
+    fasta = file_paths[0].split('/')[-1] #file name
+    if re.search(".gz$",fasta):  #finds file ending with .gz, unzipped files
+        with gzip.open(file_paths[0], 'rb') as f_in: #unzips file
             match = re.search(r'(.+).gz', fasta).group(1)
             temp_out=os.path.join(file_paths[1], "temp_dir")
             os.makedirs(temp_out, exist_ok=True)
@@ -56,13 +56,13 @@ def rename_file(file_paths):
             with open(filename, 'wb') as f_temp:
                 shutil.copyfileobj(f_in, f_temp)
             
-            with open (filename, "r") as f_temp:
+            with open (filename, "r") as f_temp: #relabels fasta headers
                 filename_2 = os.path.join(file_paths[1], match)
                 with open (filename_2, "w") as f_out:
                     for line in f_temp:
                         if re.search('^>', line):  # finds line if fasta header
                             try:
-                                match = re.search(r'\[([A-Za-z]{3})[A-Za-z]*\s([A-Za-z]{3})[A-Za-z]*\]$', line).group(1,2)
+                                match = re.search(r'\[([A-Za-z]{3})[A-Za-z]*\s([A-Za-z]{3})[A-Za-z]*\]$', line).group(1,2) #finds genus and species for relabelling headers
                             except AttributeError:
                                     match = re.search(r'\[([A-Za-z]{3})[A-Za-z]*\s[A-Za-z]*[\s]*([A-Za-z]{3})[A-Za-z]*\]$', line).group(1,2)
                             not_start = re.search(r'>(.+)', line).group(1)
@@ -106,17 +106,19 @@ def rename_file(file_paths):
 #     logging.info(f'Output in: {out_dir}')
 #     return
 
+#sets up the previous function rename_file for parralel processing
 def rename_file_stack_2(files_dir,
                         n_workers,                        
                         out_dir):
     files_list=os.listdir(files_dir) #files in input folder
-    os.makedirs(out_dir, exist_ok=True) 
-    inputs = [os.path.join(files_dir, f) for f in files_list]
-    path_dic= {input: out_dir for input in inputs}
-    logging.info(f'Processing {len(inputs)} images from: {files_dir}')
+    os.makedirs(out_dir, exist_ok=True)  #makes output directory
+    inputs = [os.path.join(files_dir, f) for f in files_list] #creates file paths
+    path_dic= {input: out_dir for input in inputs} #dictionary of input file with output file destination
+    logging.info(f'Processing {len(inputs)} images from: {files_dir}') 
     logging.info(f'Using {n_workers} workers')
-    with Pool(n_workers) as p:
+    with Pool(n_workers) as p: #parallel processor
         results = list(tqdm(p.imap(rename_file, path_dic.items()), total=len(inputs)))
+    #removes temporary folder
     temp_out=os.path.join(out_dir, "temp_dir")
     try:
         pathlib.Path.rmdir(temp_out)
