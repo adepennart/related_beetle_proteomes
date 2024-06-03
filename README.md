@@ -106,5 +106,11 @@ Run the following line of code on terminal to run the processing script.
 python rename_protein_file.py -i protein_data/ -o protein_data_rename -c 2
 ```
 
-You should finally have a folder with all the files processed and in one place. 
+To then have all proteomes in one file, run the following code
+```bash=
+ ls | while read file; do cat $file >> ../beetle_proteome.faa; done
+```
+You should finally have a folder with all the files processed and in one place and in the parent directory all the proteomes under one file called beetle_proteome.faa. 
+
+
 
