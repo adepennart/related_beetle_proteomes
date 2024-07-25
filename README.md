@@ -90,7 +90,7 @@ To finally download all proteomes run the following.
 bash esearch_related_beetles.txt
 ```
 
-### Part 1:  Proteome processing
+### Part 2:  Proteome processing
 ### Input
 The code is run with two required arguments; input and output folders.  
 ```bash=
